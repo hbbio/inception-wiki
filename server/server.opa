@@ -26,8 +26,10 @@ topic_of_path(path) = String.capitalize(String.to_lower(List.to_string_using("",
 
 list_topics() =
   f(acc, path, _content) =
-    if acc == "" then path else "{acc},{path}"
-  StringMap.fold(f, /wiki, "")
+    js_path = "\"{path}\""
+    if acc == "" then js_path else "{acc}, {js_path}"
+  list = StringMap.fold(f, /wiki, "")
+  "[{list}]"
 
 get_callback(query) =
   List.assoc("callback", query) ? error("Could not get the callback")
