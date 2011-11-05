@@ -50,13 +50,25 @@ rest(topic) =
 
 topic_of_path(path) = String.capitalize(String.to_lower(List.to_string_using("", "", "::", path)))
 
-id = parser 
- | id=([0-9a-z]+) -> Text.to_string(id)
-uri = parser
- | "_rest_/" topic=id "?callback=" fname=id ->
-   topic = String.flatten(topic)
-   fname = String.flatten(fname)
-   response = "{fname}({rest(topic_of_path(topic))})"
-   Resource.raw_response(response, "text/plain", {success})
+//list_topics() =
+//  ...
 
-server = Server.simple_server(uri)
+id = parser id=([0-9a-z]+) -> Text.to_string(id)
+
+get_callback(query) =
+  List.assoc("callback", query) ? error("Could not get the callback")
+
+dispatch(uri) =
+  match uri with
+//  | {path=["_list_" | _] ~query} ->
+//      "{get_callback(query)}({list_topics})"
+  | {path=["_rest_" | topic] ~query fragment=_ is_directory=_ is_from_root=_} ->
+      ("{get_callback(query)}({rest(topic_of_path(topic))})", {success})
+  | _ ->
+      ("", {wrong_address})
+
+response(uri) =
+  (response, status) = dispatch(uri)
+  Resource.raw_response(response, "text/javascript", status)
+
+server = Server.simple_dispatch(response)
