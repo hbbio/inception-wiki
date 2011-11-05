@@ -1,13 +1,30 @@
-db /wiki: stringmap(string)
-db /wiki[_] = "This page is empty"
+type page = { version : int ; content : intmap(string) ; parent : int }
+empty_page = { version = 0 ; content = IntMap.empty ; parent = 0 } : page
+
+db /global: int
+db /global = 0
+
+next_version() =
+   num = /global + 1
+   do /global <- num ;
+   num
+
+db /wiki: stringmap(page)
+db /wiki[_] = empty_page
 
 @publish load_source(topic) = 
   page = /wiki[topic]
-  json = { Record = [("content", { String = page })] } : RPC.Json.json
+  content = Option.default("Error 42", IntMap.get(page.version, page.content))
+  json = { Record = [ ("content", { String = content } : RPC.Json.json),
+                      ("version", { Int = page.version } : RPC.Json.json) ] } : RPC.Json.json
   Json.serialize(json)
-@publish load_rendered(topic) = <>{load_source(topic)}</>
 @publish save_source(topic, source) =
-   /wiki[topic] <- source
+   page = /wiki[topic]
+   version = next_version()
+   page = { version = version
+          ; content = IntMap.add(version, source, page.content)
+          ; parent = page.version } : page
+   /wiki[topic] <- page
 
 remove_topic(topic) = Db.remove(@/wiki[topic])
 
