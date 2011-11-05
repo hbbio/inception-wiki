@@ -50,8 +50,13 @@ rest(topic) =
 
 topic_of_path(path) = String.capitalize(String.to_lower(List.to_string_using("", "", "::", path)))
 
-//list_topics() =
-//  ...
+list_topics() =
+  f(acc, path, _content) =
+    if acc == "" then
+      path
+    else
+      "{acc},{path}"
+  StringMap.fold(f, "", /wiki)
 
 id = parser id=([0-9a-z]+) -> Text.to_string(id)
 
