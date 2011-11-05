@@ -54,6 +54,11 @@ get_callback(query) =
 
 dispatch(uri) =
   match uri with
+  | {path=["_create_" | _] ~query fragment=_ is_directory=_ is_from_root=_} ->
+     save_source("test", "test")
+     save_source("inception", "inception")
+     save_source("test", "second test")
+     Resource.raw_response("done", "plain/text", {success})
   | {path=["_list_" | _] ~query fragment=_ is_directory=_ is_from_root=_} ->
       Resource.raw_response("{get_callback(query)}({list_topics()})", "text/javascript", {success})
   | {path=["_rest_" | topic] ~query fragment=_ is_directory=_ is_from_root=_} ->
