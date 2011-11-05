@@ -14,9 +14,10 @@ db /wiki[_] = empty_page
 
 @publish load_source(topic) = 
   page = /wiki[topic]
-  content = Option.default("Error 42", IntMap.get(page.version, page.content))
+  content = Option.default("This page is empty", IntMap.get(page.version, page.content))
   json = { Record = [ ("content", { String = content } : RPC.Json.json),
-                      ("version", { Int = page.version } : RPC.Json.json) ] } : RPC.Json.json
+                      ("version", { Int = page.version } : RPC.Json.json),
+                      ("parent", { Int = page.parent } : RPC.Json.json) ] } : RPC.Json.json
   Json.serialize(json)
 @publish save_source(topic, source) =
    page = /wiki[topic]
