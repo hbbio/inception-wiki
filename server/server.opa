@@ -50,13 +50,19 @@ rest(topic) =
 
 topic_of_path(path) = String.capitalize(String.to_lower(List.to_string_using("", "", "::", path)))
 
+// for Adam: here return the list of urls of existing pages
+list_topics() =
+  ""
+
 id = parser 
  | id=([0-9a-z]+) -> Text.to_string(id)
 uri = parser
+ | "_list_?callback=" fname=id ->
+   fname = String.flatten(fname)
+   "{fname}({list_topics()})"
  | "_rest_/" topic=id "?callback=" fname=id ->
    topic = String.flatten(topic)
    fname = String.flatten(fname)
-   response = "{fname}({rest(topic_of_path(topic))})"
-   Resource.raw_response(response, "text/plain", {success})
+   "{fname}({rest(topic_of_path(topic))})"
 
-server = Server.simple_server(uri)
+server = Server.simple_server(Resource.raw_response(uri, "text/javascript", {success}))
