@@ -1,0 +1,5 @@
+The server is implemented in Opa, cf. http://opalang.org
+Compiling is:
+opa server.opa
+It creates a RESTful wiki server which supports the following methods: GET, POST, DELETE.
+URL: http://server/_rest_/pagename
