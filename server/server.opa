@@ -11,13 +11,13 @@ db /wiki[_] = "This page is empty"
 
 remove_topic(topic) = Db.remove(@/wiki[topic])
 
-rest(topic) =
+rest(topic, callback) =
   match HttpRequest.get_method() with
   | {some = method} ->
        match method with
          | {post}   -> _ = save_source(topic, HttpRequest.get_body()?"") Resource.raw_status({success})
          | {delete} -> do remove_topic(topic) Resource.raw_status({success})
-         | {get}    -> Resource.raw_response(load_source(topic), "text/plain", {success})
+         | {get}    -> Resource.raw_response("{callback}(\"{load_source(topic)}\")", "text/plain", {success})
          | _ -> Resource.raw_status({method_not_allowed})
        end
   | _ -> Resource.raw_status({bad_request})
@@ -35,14 +35,10 @@ get_callback(query) =
 dispatch(uri) =
   match uri with
   | {path=["_list_" | _] ~query fragment=_ is_directory=_ is_from_root=_} ->
-      ("{get_callback(query)}({list_topics()})", {success})
+      Resource.raw_response("{get_callback(query)}({list_topics()})", "text/javascript", {success})
   | {path=["_rest_" | topic] ~query fragment=_ is_directory=_ is_from_root=_} ->
-      ("{get_callback(query)}({rest(topic_of_path(topic))})", {success})
+      rest(topic_of_path(topic), get_callback(query))
   | _ ->
-      ("", {wrong_address})
+      Resource.raw_status({wrong_address})
 
-response(uri) =
-  (response, status) = dispatch(uri)
-  Resource.raw_response(response, "text/javascript", status)
-
-server = Server.simple_dispatch(response)
+server = Server.simple_dispatch(dispatch)
