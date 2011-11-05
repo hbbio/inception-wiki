@@ -50,10 +50,13 @@ rest(topic) =
 
 topic_of_path(path) = String.capitalize(String.to_lower(List.to_string_using("", "", "::", path)))
 
-start =
-   | {path = [] ... }               -> display("Hello")
-   | {path = ["_rest_" | path] ...} -> rest(topic_of_path(path))
-   | {~path ...}                    -> display(topic_of_path(path))
+id = parser 
+ | id=([0-9a-z]+) -> Text.to_string(id)
+uri = parser
+ | "_rest_/" topic=id "?callback=" fname=id ->
+   topic = String.flatten(topic)
+   fname = String.flatten(fname)
+   response = "{fname}({rest(topic_of_path(topic))})"
+   Resource.raw_response(response, "text/plain", {success})
 
-server = Server.of_bundle([@static_include_directory("resources")])
-server = Server.simple_dispatch(start)
+server = Server.simple_server(uri)
