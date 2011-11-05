@@ -4,6 +4,7 @@ empty_page = { version = 0 ; content = IntMap.empty ; parent = 0 } : page
 db /global: int
 db /global = 0
 
+get_global() = /global
 next_version() =
    num = /global + 1
    do /global <- num ;
@@ -65,6 +66,8 @@ dispatch(uri) =
      Resource.raw_response("done", "plain/text", {success})
   | {path=["_list_" | _] ~query fragment=_ is_directory=_ is_from_root=_} ->
       Resource.raw_response("{get_callback(query)}({list_topics()})", "text/javascript", {success})
+  | {path=["_version_" | _] ~query fragment=_ is_directory=_ is_from_root=_} ->
+      Resource.raw_response("{get_callback(query)}({get_global()})", "text/javascript", {success})
   | {path=["_rest_" | topic] ~query fragment=_ is_directory=_ is_from_root=_} ->
       rest(topic_of_path(topic), get_callback(query))
   | _ ->
