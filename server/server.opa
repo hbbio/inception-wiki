@@ -30,6 +30,9 @@ db /wiki[_] = empty_page
    do jlog("save = topic:{topic} version:{version}")
    do /wiki[topic] <- page
    void
+@public get_version() =
+   json = { Int = get_global() } : RPC.Json.json
+   Json.serialize(json)
 
 remove_topic(topic) = Db.remove(@/wiki[topic])
 
@@ -68,7 +71,7 @@ dispatch(uri) =
   | {path=["_list_" | _] ~query fragment=_ is_directory=_ is_from_root=_} ->
       Resource.raw_response("{get_callback(query)}({list_topics()})", "text/javascript", {success})
   | {path=["_version_" | _] ~query fragment=_ is_directory=_ is_from_root=_} ->
-      Resource.raw_response("{get_callback(query)}({get_global()})", "text/javascript", {success})
+      Resource.raw_response("{get_callback(query)}({get_version()})", "text/javascript", {success})
   | {path=["_rest_" | topic ] ~query fragment=_ is_directory=_ is_from_root=_} ->
       // todo: separate topic, version
       rest(topic_of_path(topic), get_callback(query), 0)
