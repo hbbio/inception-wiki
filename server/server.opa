@@ -14,6 +14,7 @@ db /wiki[_] = empty_page
 
 @publish load_source(topic) = 
   page = /wiki[topic]
+  do jlog("load = topic:{topic} version:{page.version}")
   content = Option.default("This page is empty", IntMap.get(page.version, page.content))
   json = { Record = [ ("content", { String = content } : RPC.Json.json),
                       ("version", { Int = page.version } : RPC.Json.json),
@@ -25,7 +26,9 @@ db /wiki[_] = empty_page
    page = { version = version
           ; content = IntMap.add(version, source, page.content)
           ; parent = page.version } : page
-   /wiki[topic] <- page
+   do jlog("save = topic:{topic} version:{version}")
+   do /wiki[topic] <- page
+   void
 
 remove_topic(topic) = Db.remove(@/wiki[topic])
 
@@ -43,7 +46,8 @@ rest(topic, callback) =
 topic_of_path(path) = String.capitalize(String.to_lower(List.to_string_using("", "", "::", path)))
 
 list_topics() =
-  f(acc, path, _content) =
+  f(path, _content, acc) =
+    // do jlog("acc:{acc}")
     js_path = "\"{path}\""
     if acc == "" then js_path else "{acc}, {js_path}"
   list = StringMap.fold(f, /wiki, "")
@@ -54,10 +58,10 @@ get_callback(query) =
 
 dispatch(uri) =
   match uri with
-  | {path=["_create_" | _] ~query fragment=_ is_directory=_ is_from_root=_} ->
-     save_source("test", "test")
-     save_source("inception", "inception")
-     save_source("test", "second test")
+  | {path=["_create_" | _] query=_ fragment=_ is_directory=_ is_from_root=_} ->
+     do save_source("Test", "test")
+     do save_source("Inception", "inception")
+     do save_source("Test", "second test")
      Resource.raw_response("done", "plain/text", {success})
   | {path=["_list_" | _] ~query fragment=_ is_directory=_ is_from_root=_} ->
       Resource.raw_response("{get_callback(query)}({list_topics()})", "text/javascript", {success})
