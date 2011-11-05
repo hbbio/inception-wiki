@@ -17,7 +17,7 @@ rest(topic, callback) =
        match method with
          | {post}   -> _ = save_source(topic, HttpRequest.get_body()?"") Resource.raw_status({success})
          | {delete} -> do remove_topic(topic) Resource.raw_status({success})
-         | {get}    -> Resource.raw_response("{callback}(\"{load_source(topic)}\")", "text/plain", {success})
+         | {get}    -> Resource.raw_response("{callback}(\"{load_source(topic)}\")", "text/javascript", {success})
          | _ -> Resource.raw_status({method_not_allowed})
        end
   | _ -> Resource.raw_status({bad_request})
