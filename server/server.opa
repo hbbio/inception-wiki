@@ -13,7 +13,7 @@ next_version() =
 db /wiki: stringmap(page)
 db /wiki[_] = empty_page
 
-@publish load_source(topic) = 
+@publish load_source(topic, version) = 
   page = /wiki[topic]
   do jlog("load = topic:{topic} version:{page.version}")
   content = Option.default("This page is empty", IntMap.get(page.version, page.content))
@@ -33,13 +33,14 @@ db /wiki[_] = empty_page
 
 remove_topic(topic) = Db.remove(@/wiki[topic])
 
-rest(topic, callback) =
+rest(topic, callback, version) =
+  do jlog("rest: version={version}")
   match HttpRequest.get_method() with
   | {some = method} ->
        match method with
          | {post}   -> _ = save_source(topic, HttpRequest.get_body()?"") Resource.raw_status({success})
          | {delete} -> do remove_topic(topic) Resource.raw_status({success})
-         | {get}    -> Resource.raw_response("{callback}({load_source(topic)})", "text/javascript", {success})
+         | {get}    -> Resource.raw_response("{callback}({load_source(topic, version)})", "text/javascript", {success})
          | _ -> Resource.raw_status({method_not_allowed})
        end
   | _ -> Resource.raw_status({bad_request})
@@ -68,8 +69,9 @@ dispatch(uri) =
       Resource.raw_response("{get_callback(query)}({list_topics()})", "text/javascript", {success})
   | {path=["_version_" | _] ~query fragment=_ is_directory=_ is_from_root=_} ->
       Resource.raw_response("{get_callback(query)}({get_global()})", "text/javascript", {success})
-  | {path=["_rest_" | topic] ~query fragment=_ is_directory=_ is_from_root=_} ->
-      rest(topic_of_path(topic), get_callback(query))
+  | {path=["_rest_" | topic ] ~query fragment=_ is_directory=_ is_from_root=_} ->
+      // todo: separate topic, version
+      rest(topic_of_path(topic), get_callback(query), 0)
   | _ ->
       Resource.raw_status({wrong_address})
 

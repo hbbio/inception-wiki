@@ -2,4 +2,6 @@ The server is implemented in Opa, cf. http://opalang.org
 Compiling is:
 opa server.opa
 It creates a RESTful wiki server which supports the following methods: GET, POST, DELETE.
-URL: http://server/_rest_/pagename
+URL: http://server/_rest_/pagename?callback=callback
+To get a list of pages:  http://server/_list_/?callback=callback
+To get the global version number:  http://server/_version_/?callback=callback
