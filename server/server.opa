@@ -1,11 +1,11 @@
-import stdlib.web.template
-
 db /wiki: stringmap(string)
 db /wiki[_] = "This page is empty"
 
-@publish load_source(topic)   = /wiki[topic]
+@publish load_source(topic) = 
+  page = /wiki[topic]
+  json = { Record = [("content", { String = page })] } : RPC.Json.json
+  Json.serialize(json)
 @publish load_rendered(topic) = <>{load_source(topic)}</>
-
 @publish save_source(topic, source) =
    /wiki[topic] <- source
 
@@ -17,7 +17,7 @@ rest(topic, callback) =
        match method with
          | {post}   -> _ = save_source(topic, HttpRequest.get_body()?"") Resource.raw_status({success})
          | {delete} -> do remove_topic(topic) Resource.raw_status({success})
-         | {get}    -> Resource.raw_response("{callback}(\"{load_source(topic)}\")", "text/javascript", {success})
+         | {get}    -> Resource.raw_response("{callback}({load_source(topic)})", "text/javascript", {success})
          | _ -> Resource.raw_status({method_not_allowed})
        end
   | _ -> Resource.raw_status({bad_request})
